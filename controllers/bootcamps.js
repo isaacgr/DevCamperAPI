@@ -1,19 +1,32 @@
 const Bootcamp = require("../models/Bootcamp");
+const ErrorResponse = require("../utils/errorResponse");
 
 // @desc    Get all bootcamps
 // @route   GET /api/v1/bootcamps
 // @access  Public
 exports.getBootcamps = (request, response, next) => {
-  response.status(200).json({ success: true, message: "Show all bootcamps" });
+  Bootcamp.find()
+    .then((bootcamps) => {
+      response
+        .status(200)
+        .json({ success: true, count: bootcamps.length, data: bootcamps });
+    })
+    .catch((error) => {
+      next(error);
+    });
 };
 
 // @desc    Get single bootcamps
 // @route   GET /api/v1/bootcamps/:id
 // @access  Public
 exports.getBootcamp = (request, response, next) => {
-  response
-    .status(200)
-    .json({ success: true, message: `Show bootcamp ${request.params.id}` });
+  Bootcamp.findById(request.params.id)
+    .then((bootcamp) => {
+      response.status(200).json({ success: true, data: bootcamp });
+    })
+    .catch((error) => {
+      next(error);
+    });
 };
 
 // @desc    Create new bootcamp
@@ -25,10 +38,7 @@ exports.createBootcamp = (request, response, next) => {
       response.status(201).json({ success: true, data: bootcamp });
     })
     .catch((error) => {
-      response.status(500).json({
-        success: false,
-        error: error
-      });
+      next(error);
     });
 };
 
@@ -36,16 +46,27 @@ exports.createBootcamp = (request, response, next) => {
 // @route   PUT /api/v1/bootcamps/:id
 // @access  Private
 exports.updateBootcamp = (request, response, next) => {
-  response
-    .status(200)
-    .json({ success: true, message: `Update bootcamp ${request.params.id}` });
+  Bootcamp.findByIdAndUpdate(request.params.id, request.body, {
+    new: true,
+    runValidators: true
+  })
+    .then((bootcamp) => {
+      response.status(200).json({ success: true, data: bootcamp });
+    })
+    .catch((error) => {
+      next(error);
+    });
 };
 
 // @desc    Delete bootcamp
 // @route   DELETE /api/v1/bootcamps/:id
 // @access  Private
 exports.deleteBootcamp = (request, response, next) => {
-  response
-    .status(200)
-    .json({ success: true, message: `Delete bootcamp ${request.params.id}` });
+  Bootcamp.findByIdAndDelete(request.params.id)
+    .then((bootcamp) => {
+      response.status(200).json({ success: true, data: bootcamp });
+    })
+    .catch((error) => {
+      next(error);
+    });
 };

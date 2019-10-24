@@ -2,6 +2,7 @@ require("dotenv").config({ path: "./config/config.env" });
 const express = require("express");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
+const errorHandler = require("./middleware/error");
 
 // connect to db
 connectDB();
@@ -18,6 +19,7 @@ if (process.env.NODE_ENV === "development") {
 }
 app.use(express.json());
 app.use("/api/v1/bootcamps", bootcamps);
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
   console.log(
