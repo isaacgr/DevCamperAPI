@@ -1,5 +1,5 @@
 const Bootcamp = require("../models/Bootcamp");
-const ErrorResponse = require("../utils/errorResponse");
+const geocoder = require("../utils/geocoder");
 
 // @desc    Get all bootcamps
 // @route   GET /api/v1/bootcamps
@@ -59,7 +59,7 @@ exports.updateBootcamp = (request, response, next) => {
 };
 
 // @desc    Delete bootcamp
-// @route   DELETE /api/v1/bootcamps/:id
+// @route   DELETE /api/v1/bootcamps/:iddeleteBootcamp
 // @access  Private
 exports.deleteBootcamp = (request, response, next) => {
   Bootcamp.findByIdAndDelete(request.params.id)
@@ -69,4 +69,33 @@ exports.deleteBootcamp = (request, response, next) => {
     .catch((error) => {
       next(error);
     });
+};
+
+// @desc    Get bootcamps within a radius
+// @route   GET /api/v1/bootcamps/radius/:zipcode/:distance
+// @access  Public
+exports.getBootcampsInRadius = (request, response, next) => {
+  const { zipcode, distance } = request.params;
+
+  // get lat/long from geocoder
+  geocoder.geocode(zipcode).then((loc) => {
+    const lat = loc[0].latitude;
+    const long = loc[0].longitude;
+    const radius = distance / 3963;
+    Bootcamp.find({
+      location: {
+        $geoWithin: {
+          $centerSphere: [[long, lat], radius]
+        }
+      }
+    })
+      .then((bootcamps) => {
+        response
+          .status(200)
+          .json({ success: true, count: bootcamps.length, data: bootcamps });
+      })
+      .catch((error) => {
+        next(error);
+      });
+  });
 };
