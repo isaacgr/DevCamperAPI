@@ -5,11 +5,70 @@ const geocoder = require("../utils/geocoder");
 // @route   GET /api/v1/bootcamps
 // @access  Public
 exports.getBootcamps = (request, response, next) => {
-  Bootcamp.find()
-    .then((bootcamps) => {
-      response
-        .status(200)
-        .json({ success: true, count: bootcamps.length, data: bootcamps });
+  const reqQuery = { ...request.query };
+
+  // fields to exclude
+  const removeFields = ["select", "sort", "page", "limit", "skip"];
+  removeFields.forEach((field) => delete reqQuery[field]);
+
+  let query = JSON.stringify(reqQuery);
+  query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`);
+  query = JSON.parse(query);
+
+  let dbQuery = Bootcamp.find(query);
+
+  if (request.query.select) {
+    const fields = request.query.select.split(",").join(" ");
+    dbQuery = dbQuery.select(fields);
+  }
+
+  if (request.query.sort) {
+    const sortBy = request.query.sort.split(",").join(" ");
+    dbQuery = dbQuery.sort(sortBy);
+  } else {
+    dbQuery = dbQuery.sort("-createdAt");
+  }
+
+  // pagination
+  let pagination = {};
+
+  const page = parseInt(request.query.page, 10) || 1;
+  const limit = parseInt(request.query.limit, 10) || 100;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  Bootcamp.countDocuments()
+    .then((result) => {
+      const total = result;
+      if (endIndex < total) {
+        pagination.next = {
+          page: page + 1,
+          limit
+        };
+      }
+
+      if (startIndex > 0) {
+        pagination.prev = {
+          page: page - 1,
+          limit
+        };
+      }
+      return true;
+    })
+    .then(() => {
+      dbQuery = dbQuery.skip(startIndex).limit(limit);
+
+      dbQuery
+        .then((bootcamps) => {
+          response.status(200).json({
+            success: true,
+            count: bootcamps.length,
+            pagination,
+            data: bootcamps
+          });
+        })
+        .catch((error) => {
+          next(error);
+        });
     })
     .catch((error) => {
       next(error);
