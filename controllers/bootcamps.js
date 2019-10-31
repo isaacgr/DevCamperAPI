@@ -44,13 +44,13 @@ exports.getBootcamps = (request, response, next) => {
           page: page + 1,
           limit
         };
-      }
-
-      if (startIndex > 0) {
+      } else if (startIndex > 0) {
         pagination.prev = {
           page: page - 1,
           limit
         };
+      } else {
+        pagination.lastPage = true;
       }
       return true;
     })

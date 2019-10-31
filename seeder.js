@@ -3,6 +3,7 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 
 const Bootcamp = require("./models/Bootcamp");
+const Course = require("./models/Course");
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -14,28 +15,49 @@ mongoose.connect(process.env.MONGO_URI, {
 const bootcamps = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/bootcamps.json`, "utf-8")
 );
+const courses = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/courses.json`, "utf-8")
+);
 
 // Import into database
-const importData = () =>
+const importData = () => {
   Bootcamp.create(bootcamps)
     .then(() => {
-      console.log("Database seeded");
-      process.exit();
+      console.log("Bootcamp database seeded");
+      // process.exit();
     })
     .catch((error) => {
       console.log(error);
     });
+  Course.create(courses)
+    .then(() => {
+      console.log("Course database seeded");
+      // process.exit();
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+};
 
 // delete data
-const deleteData = () =>
+const deleteData = () => {
   Bootcamp.deleteMany()
     .then(() => {
-      console.log("Database destroyed");
-      process.exit();
+      console.log("Bootcamp database destroyed");
+      // process.exit();
     })
     .catch((error) => {
       console.log(error);
     });
+  Course.deleteMany()
+    .then(() => {
+      console.log("Course database destroyed");
+      // process.exit();
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+};
 
 if (process.argv[2] === "--delete") {
   deleteData();
