@@ -15,7 +15,7 @@ exports.getBootcamps = (request, response, next) => {
   query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`);
   query = JSON.parse(query);
 
-  let dbQuery = Bootcamp.find(query);
+  let dbQuery = Bootcamp.find(query).populate("courses");
 
   if (request.query.select) {
     const fields = request.query.select.split(",").join(" ");
@@ -121,8 +121,9 @@ exports.updateBootcamp = (request, response, next) => {
 // @route   DELETE /api/v1/bootcamps/:iddeleteBootcamp
 // @access  Private
 exports.deleteBootcamp = (request, response, next) => {
-  Bootcamp.findByIdAndDelete(request.params.id)
+  Bootcamp.findById(request.params.id)
     .then((bootcamp) => {
+      bootcamp.remove();
       response.status(200).json({ success: true, data: bootcamp });
     })
     .catch((error) => {
