@@ -29,14 +29,14 @@ const importData = () => {
     .catch((error) => {
       console.log(error);
     });
-  // Course.create(courses)
-  //   .then(() => {
-  //     console.log("Course database seeded");
-  //     // process.exit();
-  //   })
-  //   .catch((error) => {
-  //     console.log(error);
-  //   });
+  Course.create(courses)
+    .then(() => {
+      console.log("Course database seeded");
+      // process.exit();
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 };
 
 // delete data

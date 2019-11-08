@@ -3,6 +3,8 @@ const express = require("express");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/error");
+const fileupload = require("express-fileupload");
+const path = require("path");
 
 // connect to db
 connectDB();
@@ -19,6 +21,9 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 app.use(express.json());
+app.use(fileupload());
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/api/v1/bootcamps", bootcamps);
 app.use("/api/v1/courses", courses);
 app.use(errorHandler);
