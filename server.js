@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const errorHandler = require("./middleware/error");
 const fileupload = require("express-fileupload");
 const path = require("path");
+const cookie = require("cookie-parser");
 
 // connect to db
 connectDB();
@@ -22,6 +23,7 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 app.use(express.json());
+app.use(cookie());
 app.use(fileupload());
 app.use(express.static(path.join(__dirname, "public")));
 
