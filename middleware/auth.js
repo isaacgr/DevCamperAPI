@@ -31,3 +31,13 @@ exports.protect = (request, response, next) => {
     return next(new ErrorResponse("Not authorized", 401));
   }
 };
+
+// grant access depending on role
+exports.authorize = (...roles) => {
+  return (request, response, next) => {
+    if (!roles.includes(request.user.role)) {
+      return next(new ErrorResponse("Not authorized", 401));
+    }
+    next();
+  };
+};
