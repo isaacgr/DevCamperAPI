@@ -74,3 +74,20 @@ const sendTokenResponse = (user, statusCode, response) => {
     .cookie("token", token, options)
     .json({ success: true, token });
 };
+
+// @desc    Get currently logged in user
+// @route   POST /api/v1/auth/me
+// @access  Private
+exports.getMe = (request, response, next) => {
+  User.findById(request.user.id)
+    .then(user => {
+      response.status(200).json({
+        success: true,
+        data: user
+      });
+      next();
+    })
+    .catch(error => {
+      next(error);
+    });
+};
