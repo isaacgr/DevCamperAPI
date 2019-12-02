@@ -16,14 +16,14 @@ exports.getCourses = (request, response, next) => {
     });
   }
   query
-    .then((courses) => {
+    .then(courses => {
       response.status(200).json({
         success: true,
         count: courses.length,
         data: courses
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -37,17 +37,17 @@ exports.getCourse = (request, response, next) => {
       path: "bootcamp",
       select: "name description"
     })
-    .then((course) => {
+    .then(course => {
       return course;
     });
   course
-    .then((course) => {
+    .then(course => {
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -62,17 +62,25 @@ exports.addCourse = (request, response, next) => {
       path: "bootcamp",
       select: "name description"
     })
-    .then((bootcamp) => {
+    .then(bootcamp => {
+      if (
+        bootcamp.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       return Course.create(request.body);
     });
   bootcamp
-    .then((course) => {
+    .then(course => {
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -81,20 +89,28 @@ exports.addCourse = (request, response, next) => {
 // @route   PUT /api/v1/courses/:id
 // @access  Private
 exports.updateCourse = (request, response, next) => {
-  const course = Course.findById(request.params.id).then((course) => {
+  const course = Course.findById(request.params.id).then(course => {
     return Course.findByIdAndUpdate(request.params.id, request.body, {
       new: true,
       runValidators: true
     });
   });
   course
-    .then((course) => {
+    .then(course => {
+      if (
+        course.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -103,17 +119,25 @@ exports.updateCourse = (request, response, next) => {
 // @route   DELETE /api/v1/courses/:id
 // @access  Private
 exports.deleteCourse = (request, response, next) => {
-  const course = Course.findById(request.params.id).then((course) => {
+  const course = Course.findById(request.params.id).then(course => {
     return course.remove();
   });
   course
-    .then((course) => {
+    .then(course => {
+      if (
+        course.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };

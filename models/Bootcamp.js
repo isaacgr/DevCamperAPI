@@ -97,6 +97,11 @@ const BootcampSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now
+    },
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true
     }
   },
   {
@@ -115,7 +120,7 @@ BootcampSchema.pre("save", function(next) {
 // geocode & create location field
 BootcampSchema.pre("save", function(next) {
   console.log("Generating geolocation");
-  geocoder.geocode(this.address).then((loc) => {
+  geocoder.geocode(this.address).then(loc => {
     console.log(this);
     this.location = {
       type: "Point",

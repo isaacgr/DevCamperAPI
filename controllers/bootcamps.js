@@ -11,10 +11,10 @@ exports.getBootcamps = (request, response, next) => {
 
   // fields to exclude
   const removeFields = ["select", "sort", "page", "limit", "skip"];
-  removeFields.forEach((field) => delete reqQuery[field]);
+  removeFields.forEach(field => delete reqQuery[field]);
 
   let query = JSON.stringify(reqQuery);
-  query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`);
+  query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
   query = JSON.parse(query);
 
   let dbQuery = Bootcamp.find(query).populate("courses");
@@ -39,7 +39,7 @@ exports.getBootcamps = (request, response, next) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
   Bootcamp.countDocuments()
-    .then((result) => {
+    .then(result => {
       const total = result;
       if (endIndex < total) {
         pagination.next = {
@@ -60,7 +60,7 @@ exports.getBootcamps = (request, response, next) => {
       dbQuery = dbQuery.skip(startIndex).limit(limit);
 
       dbQuery
-        .then((bootcamps) => {
+        .then(bootcamps => {
           response.status(200).json({
             success: true,
             count: bootcamps.length,
@@ -68,11 +68,11 @@ exports.getBootcamps = (request, response, next) => {
             data: bootcamps
           });
         })
-        .catch((error) => {
+        .catch(error => {
           next(error);
         });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -82,10 +82,10 @@ exports.getBootcamps = (request, response, next) => {
 // @access  Public
 exports.getBootcamp = (request, response, next) => {
   Bootcamp.findById(request.params.id)
-    .then((bootcamp) => {
+    .then(bootcamp => {
       response.status(200).json({ success: true, data: bootcamp });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -94,11 +94,27 @@ exports.getBootcamp = (request, response, next) => {
 // @route   POST /api/v1/bootcamps
 // @access  Private
 exports.createBootcamp = (request, response, next) => {
-  Bootcamp.create(request.body)
-    .then((bootcamp) => {
-      response.status(201).json({ success: true, data: bootcamp });
+  // Add user to request body
+  request.body.user = request.user.id;
+
+  // check for published bootcamp
+  Bootcamp.findOne({ user: request.user.id })
+    .then(bootcamps => {
+      if (bootcamps && request.user.role !== "admin") {
+        throw new ErrorResponse("Already published a bootcamp");
+      }
+      return bootcamps;
     })
-    .catch((error) => {
+    .then(() => {
+      Bootcamp.create(request.body)
+        .then(bootcamp => {
+          response.status(201).json({ success: true, data: bootcamp });
+        })
+        .catch(error => {
+          next(error);
+        });
+    })
+    .catch(error => {
       next(error);
     });
 };
@@ -111,10 +127,18 @@ exports.updateBootcamp = (request, response, next) => {
     new: true,
     runValidators: true
   })
-    .then((bootcamp) => {
+    .then(bootcamp => {
+      if (
+        bootcamp.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       response.status(200).json({ success: true, data: bootcamp });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -124,11 +148,19 @@ exports.updateBootcamp = (request, response, next) => {
 // @access  Private
 exports.deleteBootcamp = (request, response, next) => {
   Bootcamp.findById(request.params.id)
-    .then((bootcamp) => {
+    .then(bootcamp => {
+      if (
+        bootcamp.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       bootcamp.remove();
       response.status(200).json({ success: true, data: bootcamp });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
@@ -140,7 +172,7 @@ exports.getBootcampsInRadius = (request, response, next) => {
   const { zipcode, distance } = request.params;
 
   // get lat/long from geocoder
-  geocoder.geocode(zipcode).then((loc) => {
+  geocoder.geocode(zipcode).then(loc => {
     const lat = loc[0].latitude;
     const long = loc[0].longitude;
     const radius = distance / 3963;
@@ -151,12 +183,12 @@ exports.getBootcampsInRadius = (request, response, next) => {
         }
       }
     })
-      .then((bootcamps) => {
+      .then(bootcamps => {
         response
           .status(200)
           .json({ success: true, count: bootcamps.length, data: bootcamps });
       })
-      .catch((error) => {
+      .catch(error => {
         next(error);
       });
   });
@@ -181,10 +213,18 @@ exports.bootcampPhotoUpload = (request, response, next) => {
   }
 
   Bootcamp.findById(request.params.id)
-    .then((bootcamp) => {
+    .then(bootcamp => {
+      if (
+        bootcamp.user.toString() !== request.user.id &&
+        request.user.role !== "admin"
+      ) {
+        throw new ErrorResponse(
+          "You do not have permission to preform this action"
+        );
+      }
       // create a custom filename
       const filename = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
-      file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, (error) => {
+      file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, error => {
         if (error) {
           console.log(error);
           return next(new ErrorResponse("Problem with file upload", 500));
@@ -196,7 +236,7 @@ exports.bootcampPhotoUpload = (request, response, next) => {
         );
       });
     })
-    .catch((error) => {
+    .catch(error => {
       next(error);
     });
 };
