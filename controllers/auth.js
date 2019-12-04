@@ -1,5 +1,6 @@
 const ErrorResponse = require("../utils/errorResponse");
 const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
 
 // @desc    Register user
 // @route   POST /api/v1/auth
@@ -86,6 +87,52 @@ exports.getMe = (request, response, next) => {
         data: user
       });
       next();
+    })
+    .catch(error => {
+      next(error);
+    });
+};
+
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = (request, response, next) => {
+  User.findOne({ email: request.body.email })
+    .then(user => {
+      // get reset token
+      const resetToken = user.getPasswordResetToken();
+      user
+        .save({ validateBeforeSave: false })
+        .then(() => {
+          // create reset url
+          const resetUrl = `${request.protocol}://${request.get(
+            "host"
+          )}/api/v1/resetpassword/${resetToken}`;
+          const message = `Reset password: ${resetUrl}`;
+          sendEmail({
+            email: user.email,
+            subject: "Password reset token",
+            message
+          })
+            .then(() => {
+              response.status(200).json({
+                success: true,
+                data: "email sent"
+              });
+              next();
+            })
+            .catch(error => {
+              console.log(error);
+              user.resetPasswordToken = undefined;
+              user.resetPasswordExpire = undefined;
+              user.save({ validateBeforeSave: false }).then(() => {
+                next(new ErrorResponse("Unable to send email"));
+              });
+            });
+        })
+        .catch(error => {
+          next(error);
+        });
     })
     .catch(error => {
       next(error);
