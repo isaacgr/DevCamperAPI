@@ -6,26 +6,17 @@ const Bootcamp = require("../models/Bootcamp");
 // @route   GET /api/v1/bootcamps/:bootcampId/courses
 // @access  Public
 exports.getCourses = (request, response, next) => {
-  let query;
   if (request.params.bootcampId) {
-    query = Course.find({ bootcamp: request.params.bootcampId });
-  } else {
-    query = Course.find().populate({
-      path: "bootcamp",
-      select: "name description"
-    });
-  }
-  query
-    .then(courses => {
+    Course.find({ bootcamp: request.params.bootcampId }).then((courses) =>
       response.status(200).json({
         success: true,
         count: courses.length,
         data: courses
-      });
-    })
-    .catch(error => {
-      next(error);
-    });
+      })
+    );
+  } else {
+    response.status(200).json(response.advancedResults);
+  }
 };
 
 // @desc    Get a single course
@@ -37,17 +28,17 @@ exports.getCourse = (request, response, next) => {
       path: "bootcamp",
       select: "name description"
     })
-    .then(course => {
+    .then((course) => {
       return course;
     });
   course
-    .then(course => {
+    .then((course) => {
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch(error => {
+    .catch((error) => {
       next(error);
     });
 };
@@ -62,7 +53,7 @@ exports.addCourse = (request, response, next) => {
       path: "bootcamp",
       select: "name description"
     })
-    .then(bootcamp => {
+    .then((bootcamp) => {
       if (
         bootcamp.user.toString() !== request.user.id &&
         request.user.role !== "admin"
@@ -74,13 +65,13 @@ exports.addCourse = (request, response, next) => {
       return Course.create(request.body);
     });
   bootcamp
-    .then(course => {
+    .then((course) => {
       response.status(200).json({
         success: true,
         data: course
       });
     })
-    .catch(error => {
+    .catch((error) => {
       next(error);
     });
 };
@@ -89,14 +80,14 @@ exports.addCourse = (request, response, next) => {
 // @route   PUT /api/v1/courses/:id
 // @access  Private
 exports.updateCourse = (request, response, next) => {
-  const course = Course.findById(request.params.id).then(course => {
+  const course = Course.findById(request.params.id).then((course) => {
     return Course.findByIdAndUpdate(request.params.id, request.body, {
       new: true,
       runValidators: true
     });
   });
   course
-    .then(course => {
+    .then((course) => {
       if (
         course.user.toString() !== request.user.id &&
         request.user.role !== "admin"
@@ -110,7 +101,7 @@ exports.updateCourse = (request, response, next) => {
         data: course
       });
     })
-    .catch(error => {
+    .catch((error) => {
       next(error);
     });
 };
@@ -119,11 +110,11 @@ exports.updateCourse = (request, response, next) => {
 // @route   DELETE /api/v1/courses/:id
 // @access  Private
 exports.deleteCourse = (request, response, next) => {
-  const course = Course.findById(request.params.id).then(course => {
+  const course = Course.findById(request.params.id).then((course) => {
     return course.remove();
   });
   course
-    .then(course => {
+    .then((course) => {
       if (
         course.user.toString() !== request.user.id &&
         request.user.role !== "admin"
@@ -137,7 +128,7 @@ exports.deleteCourse = (request, response, next) => {
         data: course
       });
     })
-    .catch(error => {
+    .catch((error) => {
       next(error);
     });
 };

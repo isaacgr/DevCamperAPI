@@ -1,4 +1,7 @@
 const express = require("express");
+const Bootcamp = require("../models/Bootcamp");
+const advancedResults = require("../middleware/advancedResults");
+
 const {
   getBootcamp,
   getBootcamps,
@@ -24,7 +27,7 @@ router
 
 router
   .route("/")
-  .get(getBootcamps)
+  .get(advancedResults(Bootcamp, "courses"), getBootcamps)
   .post(protect, authorize("publisher", "admin"), createBootcamp);
 
 router
